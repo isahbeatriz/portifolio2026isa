@@ -1,21 +1,178 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Macaco Mania 🐒</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>🐒 Macaco Mania</title>
+
+<style>
+body {
+  background: #111;
+  color: white;
+  text-align: center;
+  font-family: Arial;
+}
+
+#game {
+  width: 400px;
+  height: 400px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(20, 20px);
+}
+
+.cell {
+  width: 20px;
+  height: 20px;
+}
+
+.wall { background: #333; }
+
+.banana {
+  background: yellow;
+  border-radius: 50%;
+}
+
+.monkey { background: orange; }
+
+.gorilla { background: purple; }
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+}
+</style>
+
 </head>
 <body>
 
 <h1>🐒 Macaco Mania 🍌</h1>
-<div class="info">
-  Pontuação: <span id="score">0</span>
-</div>
+<p>Pontos: <span id="score">0</span></p>
 
 <div id="game"></div>
-
 <button onclick="restartGame()">Reiniciar</button>
 
-<script src="script.js"></script>
+<script>
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+
+const width = 20;
+let cells = [];
+let score = 0;
+let running = true;
+
+let monkey = 210;
+let gorillas = [45, 85, 325];
+
+// Criar mapa
+function createBoard() {
+  game.innerHTML = "";
+  cells = [];
+
+  for (let i = 0; i < 400; i++) {
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+
+    // paredes
+    if (
+      i < 20 ||
+      i >= 380 ||
+      i % 20 === 0 ||
+      i % 20 === 19
+    ) {
+      cell.classList.add("wall");
+    } else {
+      cell.classList.add("banana");
+    }
+
+    game.appendChild(cell);
+    cells.push(cell);
+  }
+}
+
+// Desenhar personagens
+function draw() {
+  cells.forEach(c => c.classList.remove("monkey", "gorilla"));
+
+  cells[monkey].classList.add("monkey");
+  gorillas.forEach(g => cells[g].classList.add("gorilla"));
+}
+
+// Movimento do macaco
+document.addEventListener("keydown", e => {
+  if (!running) return;
+
+  let next = monkey;
+
+  if (e.key === "ArrowUp") next -= width;
+  if (e.key === "ArrowDown") next += width;
+  if (e.key === "ArrowLeft") next -= 1;
+  if (e.key === "ArrowRight") next += 1;
+
+  if (!cells[next].classList.contains("wall")) {
+    monkey = next;
+  }
+
+  eat();
+  check();
+  draw();
+});
+
+// Comer banana
+function eat() {
+  if (cells[monkey].classList.contains("banana")) {
+    cells[monkey].classList.remove("banana");
+    score++;
+    scoreEl.textContent = score;
+  }
+}
+
+// Gorilas
+function moveGorillas() {
+  if (!running) return;
+
+  gorillas = gorillas.map(g => {
+    const moves = [-1, 1, width, -width];
+    let move = moves[Math.floor(Math.random() * moves.length)];
+
+    if (!cells[g + move].classList.contains("wall")) {
+      return g + move;
+    }
+
+    return g;
+  });
+
+  check();
+  draw();
+}
+
+setInterval(moveGorillas, 400);
+
+// Colisão
+function check() {
+  if (gorillas.includes(monkey)) {
+    running = false;
+    setTimeout(() => {
+      alert("💀 Game Over! Pontos: " + score);
+    }, 100);
+  }
+}
+
+// Reiniciar
+function restartGame() {
+  score = 0;
+  running = true;
+  monkey = 210;
+  gorillas = [45, 85, 325];
+  scoreEl.textContent = 0;
+
+  createBoard();
+  draw();
+}
+
+// Iniciar
+createBoard();
+draw();
+</script>
+
 </body>
 </html>
