@@ -1,26 +1,26 @@
 body {
-  background-color: #111;
+  background: #0d0d0d;
   color: white;
   text-align: center;
   font-family: Arial, sans-serif;
 }
 
 #game {
-  width: 420px;
-  height: 420px;
+  width: 400px;
+  height: 400px;
   margin: 20px auto;
   display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  grid-template-rows: repeat(20, 1fr);
+  grid-template-columns: repeat(20, 20px);
+  grid-template-rows: repeat(20, 20px);
 }
 
 .cell {
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
 }
 
 .wall {
-  background-color: #333;
+  background: #2c2c2c;
 }
 
 .banana {
@@ -36,4 +36,10 @@ body {
 .gorilla {
   background-image: url('https://cdn-icons-png.flaticon.com/512/3069/3069172.png');
   background-size: cover;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
 }
