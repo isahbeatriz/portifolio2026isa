@@ -2,30 +2,34 @@ const game = document.getElementById("game");
 const scoreDisplay = document.getElementById("score");
 
 const width = 20;
+let cells = [];
 let score = 0;
+let gameRunning = true;
 
-let monkeyIndex = 210;
-let gorillas = [22, 38, 362];
+// 0 = banana | 1 = parede
+const layout = new Array(400).fill(0);
 
-const layout = [
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
-  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
-  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
-  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
-  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
-  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
-];
+// Criar paredes externas
+for (let i = 0; i < 400; i++) {
+  if (
+    i < 20 ||
+    i >= 380 ||
+    i % 20 === 0 ||
+    i % 20 === 19
+  ) {
+    layout[i] = 1;
+  }
+}
 
-const cells = [];
+// Paredes internas simples
+[42,43,44,62,82,102,122,142,162].forEach(i => layout[i] = 1);
 
-// Criar mapa
+// Criar grid
 function createBoard() {
-  for (let i = 0; i < width * width; i++) {
+  game.innerHTML = "";
+  cells = [];
+
+  for (let i = 0; i < 400; i++) {
     const cell = document.createElement("div");
     cell.classList.add("cell");
 
@@ -40,74 +44,104 @@ function createBoard() {
   }
 }
 
-createBoard();
+let monkey = 210;
+let gorillas = [50, 70, 330];
 
-// Colocar personagens
-cells[monkeyIndex].classList.add("monkey");
-gorillas.forEach(index => cells[index].classList.add("gorilla"));
+// Render inicial
+function render() {
+  cells.forEach(cell => {
+    cell.classList.remove("monkey", "gorilla");
+  });
+
+  cells[monkey].classList.add("monkey");
+  gorillas.forEach(g => cells[g].classList.add("gorilla"));
+}
 
 // Movimento do macaco
 function moveMonkey(e) {
-  cells[monkeyIndex].classList.remove("monkey");
+  if (!gameRunning) return;
 
-  switch (e.key) {
-    case "ArrowUp":
-      if (!cells[monkeyIndex - width].classList.contains("wall"))
-        monkeyIndex -= width;
-      break;
-    case "ArrowDown":
-      if (!cells[monkeyIndex + width].classList.contains("wall"))
-        monkeyIndex += width;
-      break;
-    case "ArrowLeft":
-      if (!cells[monkeyIndex - 1].classList.contains("wall"))
-        monkeyIndex -= 1;
-      break;
-    case "ArrowRight":
-      if (!cells[monkeyIndex + 1].classList.contains("wall"))
-        monkeyIndex += 1;
-      break;
+  let next = monkey;
+
+  if (e.key === "ArrowUp") next -= width;
+  if (e.key === "ArrowDown") next += width;
+  if (e.key === "ArrowLeft") next -= 1;
+  if (e.key === "ArrowRight") next += 1;
+
+  if (!cells[next].classList.contains("wall")) {
+    monkey = next;
   }
 
   eatBanana();
-  checkGameOver();
-
-  cells[monkeyIndex].classList.add("monkey");
+  checkCollision();
+  render();
 }
 
 document.addEventListener("keydown", moveMonkey);
 
 // Comer banana
 function eatBanana() {
-  if (cells[monkeyIndex].classList.contains("banana")) {
-    cells[monkeyIndex].classList.remove("banana");
+  if (cells[monkey].classList.contains("banana")) {
+    cells[monkey].classList.remove("banana");
     score++;
     scoreDisplay.textContent = score;
   }
 }
 
-// Movimento dos gorilas (aleatório)
+// IA dos gorilas (semi inteligente)
 function moveGorillas() {
-  gorillas.forEach((gorilla, index) => {
-    const directions = [-1, 1, width, -width];
-    const move = directions[Math.floor(Math.random() * directions.length)];
+  if (!gameRunning) return;
 
-    if (!cells[gorilla + move].classList.contains("wall")) {
-      cells[gorilla].classList.remove("gorilla");
-      gorillas[index] = gorilla + move;
-      cells[gorillas[index]].classList.add("gorilla");
+  gorillas = gorillas.map(g => {
+    const directions = [-1, 1, width, -width];
+
+    // tenta ir na direção do macaco (simples)
+    let bestMove = directions.sort(() => Math.random() - 0.5);
+
+    for (let move of bestMove) {
+      let next = g + move;
+
+      if (!cells[next].classList.contains("wall")) {
+        return next;
+      }
     }
+
+    return g;
   });
 
-  checkGameOver();
+  checkCollision();
+  render();
 }
 
-setInterval(moveGorillas, 500);
+setInterval(moveGorillas, 400);
 
-// Game Over
-function checkGameOver() {
-  if (cells[monkeyIndex].classList.contains("gorilla")) {
-    alert("Game Over! 🦍");
-    document.removeEventListener("keydown", moveMonkey);
+// Colisão
+function checkCollision() {
+  if (gorillas.includes(monkey)) {
+    gameOver();
   }
 }
+
+// Game Over
+function gameOver() {
+  gameRunning = false;
+  setTimeout(() => {
+    alert("💀 Game Over! Pontuação: " + score);
+  }, 100);
+}
+
+// Reiniciar
+function restartGame() {
+  score = 0;
+  monkey = 210;
+  gorillas = [50, 70, 330];
+  gameRunning = true;
+  scoreDisplay.textContent = 0;
+
+  createBoard();
+  render();
+}
+
+// Inicializar
+createBoard();
+render();
