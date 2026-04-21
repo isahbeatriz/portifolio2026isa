@@ -1,0 +1,113 @@
+const game = document.getElementById("game");
+const scoreDisplay = document.getElementById("score");
+
+const width = 20;
+let score = 0;
+
+let monkeyIndex = 210;
+let gorillas = [22, 38, 362];
+
+const layout = [
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,0,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,0,1,
+  1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+];
+
+const cells = [];
+
+// Criar mapa
+function createBoard() {
+  for (let i = 0; i < width * width; i++) {
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+
+    if (layout[i] === 1) {
+      cell.classList.add("wall");
+    } else {
+      cell.classList.add("banana");
+    }
+
+    game.appendChild(cell);
+    cells.push(cell);
+  }
+}
+
+createBoard();
+
+// Colocar personagens
+cells[monkeyIndex].classList.add("monkey");
+gorillas.forEach(index => cells[index].classList.add("gorilla"));
+
+// Movimento do macaco
+function moveMonkey(e) {
+  cells[monkeyIndex].classList.remove("monkey");
+
+  switch (e.key) {
+    case "ArrowUp":
+      if (!cells[monkeyIndex - width].classList.contains("wall"))
+        monkeyIndex -= width;
+      break;
+    case "ArrowDown":
+      if (!cells[monkeyIndex + width].classList.contains("wall"))
+        monkeyIndex += width;
+      break;
+    case "ArrowLeft":
+      if (!cells[monkeyIndex - 1].classList.contains("wall"))
+        monkeyIndex -= 1;
+      break;
+    case "ArrowRight":
+      if (!cells[monkeyIndex + 1].classList.contains("wall"))
+        monkeyIndex += 1;
+      break;
+  }
+
+  eatBanana();
+  checkGameOver();
+
+  cells[monkeyIndex].classList.add("monkey");
+}
+
+document.addEventListener("keydown", moveMonkey);
+
+// Comer banana
+function eatBanana() {
+  if (cells[monkeyIndex].classList.contains("banana")) {
+    cells[monkeyIndex].classList.remove("banana");
+    score++;
+    scoreDisplay.textContent = score;
+  }
+}
+
+// Movimento dos gorilas (aleatório)
+function moveGorillas() {
+  gorillas.forEach((gorilla, index) => {
+    const directions = [-1, 1, width, -width];
+    const move = directions[Math.floor(Math.random() * directions.length)];
+
+    if (!cells[gorilla + move].classList.contains("wall")) {
+      cells[gorilla].classList.remove("gorilla");
+      gorillas[index] = gorilla + move;
+      cells[gorillas[index]].classList.add("gorilla");
+    }
+  });
+
+  checkGameOver();
+}
+
+setInterval(moveGorillas, 500);
+
+// Game Over
+function checkGameOver() {
+  if (cells[monkeyIndex].classList.contains("gorilla")) {
+    alert("Game Over! 🦍");
+    document.removeEventListener("keydown", moveMonkey);
+  }
+}
